@@ -1,0 +1,79 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Department {
+  id        String       @id @default(cuid())
+  name      String
+  parentId  String?      @map("parent_id")
+  parent    Department?  @relation("DepartmentHierarchy", fields: [parentId], references: [id])
+  children  Department[] @relation("DepartmentHierarchy")
+  employees Employee[]
+  createdAt DateTime     @default(now()) @map("created_at")
+  updatedAt DateTime     @updatedAt @map("updated_at")
+
+  @@map("departments")
+}
+
+model Employee {
+  id                String             @id @default(cuid())
+  employeeNumber    String             @unique @map("employee_number")
+  name              String
+  departmentId      String             @map("department_id")
+  department        Department         @relation(fields: [departmentId], references: [id])
+  shiftType         String             @default("SHIFT_9") @map("shift_type") // SHIFT_8, SHIFT_9, SHIFT_10
+  position          String?
+  isActive          Boolean            @default(true) @map("is_active")
+  accessLogs        AccessLog[]
+  attendanceRecords AttendanceRecord[]
+  createdAt         DateTime           @default(now()) @map("created_at")
+  updatedAt         DateTime           @updatedAt @map("updated_at")
+
+  @@map("employees")
+}
+
+model AccessLog {
+  id         String   @id @default(cuid())
+  employeeId String   @map("employee_id")
+  employee   Employee @relation(fields: [employeeId], references: [id])
+  cardNumber String   @map("card_number")
+  accessTime DateTime @map("access_time")
+  direction  String   // IN, OUT
+  gateId     String?  @map("gate_id")
+  syncedAt   DateTime @default(now()) @map("synced_at")
+
+  @@index([employeeId, accessTime])
+  @@map("access_logs")
+}
+
+model AttendanceRecord {
+  id         String    @id @default(cuid())
+  employeeId String    @map("employee_id")
+  employee   Employee  @relation(fields: [employeeId], references: [id])
+  date       DateTime
+  checkIn    DateTime? @map("check_in")
+  checkOut   DateTime? @map("check_out")
+  shiftType  String    @map("shift_type") // SHIFT_8, SHIFT_9, SHIFT_10
+  workHours  Float?    @map("work_hours")
+  overtime   Float?
+  status     String    @default("NORMAL") // NORMAL, LATE, ABSENT, EARLY_LEAVE
+  isAnomaly  Boolean   @default(false) @map("is_anomaly")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+
+  @@unique([employeeId, date])
+  @@map("attendance_records")
+}
+
+model SystemSetting {
+  id    String @id @default(cuid())
+  key   String @unique
+  value String
+
+  @@map("system_settings")
+}
