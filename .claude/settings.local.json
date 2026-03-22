@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/오솔미/OneDrive/바탕 화면/PROJECT/selfish-test/$HOME/.claude/plugins/superpowers/**)",
+      "Read(//c/Users/오솔미/OneDrive/바탕 화면/PROJECT/selfish-test/$HOME/.claude/plugins/superpowers/.claude-plugin/**)",
+      "Bash(cmd /c \"where node & where npm & where npx\")",
+      "Bash(echo \"Exit: $?\")",
+      "Bash(gh repo:*)",
+      "WebFetch(domain:github.com)",
+      "Bash(export PATH=\"$PATH:/c/Program Files/nodejs:/c/Users/오솔미/AppData/Roaming/npm\")",
+      "Bash(npm --version)",
+      "Bash(curl -L \"https://nodejs.org/dist/v20.11.1/node-v20.11.1-x64.msi\" -o \"/c/Users/오솔미/Downloads/node-v20.11.1-x64.msi\")",
+      "Bash(msiexec /i \"C:\\\\Users\\\\오솔미\\\\Downloads\\\\node-v20.11.1-x64.msi\" /qn /norestart ADDLOCAL=ALL)",
+      "Bash(export PATH=\"$PATH:/c/Program Files/nodejs\")",
+      "Bash(npx --version)",
+      "Bash(curl -L \"https://nodejs.org/dist/v20.11.1/node-v20.11.1-win-x64.zip\" -o \"/c/Users/오솔미/Downloads/node-v20.11.1-win-x64.zip\")",
+      "Bash(unzip \"/c/Users/오솔미/Downloads/node-v20.11.1-win-x64.zip\" -d \"/c/Users/오솔미/AppData/Local/\")",
+      "Bash(export PATH=\"/c/Users/오솔미/AppData/Local/node-v20.11.1-win-x64:$PATH\")",
+      "Bash(npx create-next-app@latest . --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --use-npm --yes)"
+    ]
+  }
+}
