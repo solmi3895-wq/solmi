@@ -2,6 +2,9 @@
   "name": "selfish-test",
   "version": "0.1.0",
   "private": true,
+  "prisma": {
+    "seed": "npx tsx prisma/seed.ts"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -9,7 +12,9 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@prisma/adapter-better-sqlite3": "^7.5.0",
     "@prisma/client": "^7.5.0",
+    "better-sqlite3": "^12.8.0",
     "date-fns": "^4.1.0",
     "exceljs": "^4.4.0",
     "next": "16.2.1",
