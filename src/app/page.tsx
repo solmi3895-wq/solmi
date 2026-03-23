@@ -41,15 +41,22 @@ export default function Home() {
   const [uploading, setUploading] = useState(false)
   const [uploadResult, setUploadResult] = useState<{ imported: number; skipped: number; total: number } | null>(null)
   const [dragOver, setDragOver] = useState(false)
+  const [selectedDate, setSelectedDate] = useState<string>('')
 
-  const fetchDashboard = () => fetch('/api/dashboard').then((r) => r.json()).then(setDashboard)
-  const fetchRecords = () => {
-    const params = filter ? `?status=${filter}` : ''
-    fetch(`/api/attendance${params}`).then((r) => r.json()).then(setRecords)
+  const fetchDashboard = (date?: string) => {
+    const params = date ? `?date=${date}` : ''
+    fetch(`/api/dashboard${params}`).then((r) => r.json()).then(setDashboard)
+  }
+  const fetchRecords = (date?: string) => {
+    const params = new URLSearchParams()
+    if (filter) params.set('status', filter)
+    if (date || selectedDate) params.set('date', date || selectedDate)
+    const qs = params.toString() ? `?${params.toString()}` : ''
+    fetch(`/api/attendance${qs}`).then((r) => r.json()).then(setRecords)
   }
 
   useEffect(() => { fetchDashboard(); fetchRecords() }, [])
-  useEffect(() => { fetchRecords() }, [filter])
+  useEffect(() => { fetchRecords() }, [filter, selectedDate])
 
   const handleSync = async () => {
     setSyncing(true)
@@ -84,13 +91,25 @@ export default function Home() {
       <header className="border-b bg-white px-6 py-4 dark:bg-zinc-900">
         <div className="mx-auto flex max-w-6xl items-center justify-between">
           <h1 className="text-xl font-bold dark:text-white">근태 관리 시스템</h1>
-          <button
-            onClick={handleSync}
-            disabled={syncing}
-            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
-          >
-            {syncing ? '동기화 중...' : '출입 데이터 동기화'}
-          </button>
+          <div className="flex items-center gap-3">
+            <input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => {
+                setSelectedDate(e.target.value)
+                fetchDashboard(e.target.value)
+                fetchRecords(e.target.value)
+              }}
+              className="rounded-lg border px-3 py-2 text-sm dark:bg-zinc-800 dark:text-white dark:border-zinc-700"
+            />
+            <button
+              onClick={handleSync}
+              disabled={syncing}
+              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+            >
+              {syncing ? '동기화 중...' : '출입 데이터 동기화'}
+            </button>
+          </div>
         </div>
       </header>
 

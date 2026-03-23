@@ -67,19 +67,24 @@ export async function POST(request: NextRequest) {
       }
       const deptId = departments.get(deptName)!
 
-      // Upsert employee (use name as fallback key if no employee number)
+      // Upsert employee
       const empKey = employeeNumber || `${deptName}-${name}`
       if (!employees.has(empKey)) {
+        // 사원번호가 있으면 사원번호로, 없으면 이름+부서로 검색
         const existing = employeeNumber
-          ? await prisma.employee.findUnique({ where: { employeeNumber } })
+          ? await prisma.employee.findUnique({ where: { employeeNumber: String(employeeNumber) } })
           : await prisma.employee.findFirst({ where: { name, departmentId: deptId } })
 
         if (existing) {
+          // 부서가 변경되었으면 업데이트
+          if (existing.departmentId !== deptId) {
+            await prisma.employee.update({ where: { id: existing.id }, data: { departmentId: deptId } })
+          }
           employees.set(empKey, existing.id)
         } else {
           const emp = await prisma.employee.create({
             data: {
-              employeeNumber: employeeNumber || `AUTO-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+              employeeNumber: employeeNumber ? String(employeeNumber) : `N-${name}`,
               name,
               departmentId: deptId,
               shiftType: 'SHIFT_9',
@@ -97,11 +102,13 @@ export async function POST(request: NextRequest) {
       const checkIn = checkInStr ? new Date(checkInStr) : null
       const checkOut = checkOutStr ? new Date(checkOutStr) : null
 
-      // Determine status
+      // Determine status from 출근판정
       let status = 'NORMAL'
-      if (checkInStatus === '결근') status = 'ABSENT'
-      else if (checkInStatus === '지각') status = 'LATE'
-      else if (lateTimeStr !== '00:00') status = 'LATE'
+      if (checkInStatus === '결근' || checkInStatus === '') status = 'ABSENT'
+      else if (checkInStatus === '지각' || lateTimeStr !== '00:00') status = 'LATE'
+      else if (checkInStatus === '정상출근') status = 'NORMAL'
+      // 출근 기록이 있으면 결근이 아님
+      if (checkIn && status === 'ABSENT') status = 'NORMAL'
 
       const workHours = parseHoursMinutes(totalWorkStr)
       const overtime = parseHoursMinutes(overtimeStr)

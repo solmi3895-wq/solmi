@@ -1,11 +1,12 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const today = new Date()
-    const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0)
-    const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999)
+    const dateStr = request.nextUrl.searchParams.get('date')
+    const target = dateStr ? new Date(dateStr) : new Date()
+    const startOfDay = new Date(target.getFullYear(), target.getMonth(), target.getDate(), 0, 0, 0)
+    const endOfDay = new Date(target.getFullYear(), target.getMonth(), target.getDate(), 23, 59, 59, 999)
 
     // Get all active employees
     const totalEmployees = await prisma.employee.count({
