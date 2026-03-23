@@ -9,7 +9,7 @@ datasource db {
 
 model Department {
   id        String       @id @default(cuid())
-  name      String
+  name      String       @unique
   parentId  String?      @map("parent_id")
   parent    Department?  @relation("DepartmentHierarchy", fields: [parentId], references: [id])
   children  Department[] @relation("DepartmentHierarchy")

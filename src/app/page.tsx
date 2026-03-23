@@ -37,7 +37,10 @@ export default function Home() {
   const [records, setRecords] = useState<AttendanceRecord[]>([])
   const [filter, setFilter] = useState<string>('')
   const [syncing, setSyncing] = useState(false)
-  const [tab, setTab] = useState<'dashboard' | 'records'>('dashboard')
+  const [tab, setTab] = useState<'dashboard' | 'records' | 'upload'>('dashboard')
+  const [uploading, setUploading] = useState(false)
+  const [uploadResult, setUploadResult] = useState<{ imported: number; skipped: number; total: number } | null>(null)
+  const [dragOver, setDragOver] = useState(false)
 
   const fetchDashboard = () => fetch('/api/dashboard').then((r) => r.json()).then(setDashboard)
   const fetchRecords = () => {
@@ -53,6 +56,27 @@ export default function Home() {
     await fetch('/api/sync', { method: 'POST' })
     await Promise.all([fetchDashboard(), fetchRecords()])
     setSyncing(false)
+  }
+
+  const handleUpload = async (file: File) => {
+    setUploading(true)
+    setUploadResult(null)
+    const formData = new FormData()
+    formData.append('file', file)
+    const res = await fetch('/api/upload', { method: 'POST', body: formData })
+    const result = await res.json()
+    setUploadResult(result)
+    setUploading(false)
+    await Promise.all([fetchDashboard(), fetchRecords()])
+  }
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    setDragOver(false)
+    const file = e.dataTransfer.files[0]
+    if (file && (file.name.endsWith('.xlsx') || file.name.endsWith('.xls'))) {
+      handleUpload(file)
+    }
   }
 
   return (
@@ -72,7 +96,7 @@ export default function Home() {
 
       <div className="mx-auto max-w-6xl px-6 py-6">
         <div className="mb-6 flex gap-2">
-          {(['dashboard', 'records'] as const).map((t) => (
+          {(['dashboard', 'records', 'upload'] as const).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
@@ -80,7 +104,7 @@ export default function Home() {
                 tab === t ? 'bg-blue-600 text-white' : 'bg-white text-zinc-700 hover:bg-zinc-100 dark:bg-zinc-800 dark:text-zinc-300'
               }`}
             >
-              {t === 'dashboard' ? '대시보드' : '근태 기록'}
+              {t === 'dashboard' ? '대시보드' : t === 'records' ? '근태 기록' : '엑셀 업로드'}
             </button>
           ))}
         </div>
@@ -134,6 +158,45 @@ export default function Home() {
               </div>
             )}
           </>
+        )}
+
+        {tab === 'upload' && (
+          <div
+            onDrop={handleDrop}
+            onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
+            onDragLeave={() => setDragOver(false)}
+            className={`rounded-xl border-2 border-dashed p-12 text-center transition-colors ${
+              dragOver ? 'border-blue-500 bg-blue-50 dark:bg-blue-950' : 'border-zinc-300 bg-white dark:border-zinc-700 dark:bg-zinc-900'
+            }`}
+          >
+            <div className="mb-4 text-4xl">📂</div>
+            <p className="mb-2 text-lg font-semibold dark:text-white">
+              {uploading ? '업로드 중...' : '엑셀 파일을 여기에 드래그하세요'}
+            </p>
+            <p className="mb-4 text-sm text-zinc-500">또는 아래 버튼으로 파일을 선택하세요 (.xlsx)</p>
+            <input
+              type="file"
+              accept=".xlsx,.xls"
+              className="hidden"
+              id="file-upload"
+              onChange={(e) => {
+                const file = e.target.files?.[0]
+                if (file) handleUpload(file)
+              }}
+            />
+            <label
+              htmlFor="file-upload"
+              className="inline-block cursor-pointer rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-blue-700"
+            >
+              파일 선택
+            </label>
+
+            {uploadResult && (
+              <div className="mt-6 rounded-lg bg-green-50 p-4 text-sm text-green-800 dark:bg-green-950 dark:text-green-200">
+                업로드 완료: 총 {uploadResult.total}건 중 {uploadResult.imported}건 처리, {uploadResult.skipped}건 스킵
+              </div>
+            )}
+          </div>
         )}
 
         {tab === 'records' && (
