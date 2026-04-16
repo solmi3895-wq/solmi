@@ -1,12 +1,18 @@
 import { PrismaClient } from '../generated/prisma/client'
-import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3'
+import { PrismaNeon } from '@prisma/adapter-neon'
+import { neonConfig, Pool } from '@neondatabase/serverless'
+
+// Vercel serverless 환경 설정
+neonConfig.useSecureWebSocket = true
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined
 }
 
 function createClient() {
-  const adapter = new PrismaBetterSqlite3({ url: process.env.DATABASE_URL ?? 'file:./dev.db' })
+  const connectionString = process.env.DATABASE_URL!
+  const pool = new Pool({ connectionString })
+  const adapter = new PrismaNeon(pool)
   return new PrismaClient({ adapter })
 }
 

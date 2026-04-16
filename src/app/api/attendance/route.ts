@@ -9,14 +9,21 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status')
 
     const targetDate = dateStr ? new Date(dateStr) : new Date()
-    const startOfDay = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate())
-    const endOfDay = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 23, 59, 59, 999)
+    // KST 기준 날짜를 UTC로 변환하여 조회
+    const startOfDay = new Date(Date.UTC(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), -9))
+    const endOfDay = new Date(Date.UTC(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 14, 59, 59, 999))
 
     const where: Record<string, unknown> = {
       date: { gte: startOfDay, lte: endOfDay },
     }
+    const search = searchParams.get('search')
     if (status) where.status = status
-    if (departmentId) where.employee = { departmentId }
+    if (departmentId || search) {
+      const empWhere: Record<string, unknown> = {}
+      if (departmentId) empWhere.departmentId = departmentId
+      if (search) empWhere.name = { contains: search }
+      where.employee = empWhere
+    }
 
     const records = await prisma.attendanceRecord.findMany({
       where,

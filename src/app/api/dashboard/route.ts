@@ -5,8 +5,9 @@ export async function GET(request: NextRequest) {
   try {
     const dateStr = request.nextUrl.searchParams.get('date')
     const target = dateStr ? new Date(dateStr) : new Date()
-    const startOfDay = new Date(target.getFullYear(), target.getMonth(), target.getDate(), 0, 0, 0)
-    const endOfDay = new Date(target.getFullYear(), target.getMonth(), target.getDate(), 23, 59, 59, 999)
+    // KST 기준 날짜를 UTC로 변환하여 조회
+    const startOfDay = new Date(Date.UTC(target.getFullYear(), target.getMonth(), target.getDate(), -9))
+    const endOfDay = new Date(Date.UTC(target.getFullYear(), target.getMonth(), target.getDate(), 14, 59, 59, 999))
 
     // Get all active employees
     const totalEmployees = await prisma.employee.count({
